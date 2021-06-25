@@ -1,31 +1,52 @@
+from bson.json_util import dumps
 from flask import request
 from flask_restful import Resource
 
-from resources.Messages import excluded_message
-from models.MovieModel import list_movies
+from resources.Messages import exclude_success_message, post_success_message, nodatas_message, update_success_message
 
 import json
 
 
-class MoviePerId(Resource):
-    def get(self, id):
-        try:
-            response = list_movies[id - 1]
-        except IndexError:
-            response = {"message": "There are no movie with id {}, sorry :/".format(id)}
-        except Exception:
-            response = {"message": "Unknown Error. Sooo bad...."}
-        return response
-
-    def put(self, id):
-        datas = json.loads(request.data)
-        list_movies[id] = datas
-
-    def delete(self, id):
-        list_movies.pop(id)
-        return excluded_message
-
-
 class AllMovies(Resource):
     def get(self):
-        return list_movies
+        from app import db
+        movies = json.loads(dumps(list(db['movies'].find())))
+        if movies is None:
+            return nodatas_message
+        return movies
+
+
+class MoviePerId(Resource):
+    def get(self, id):
+        from app import db
+        movie = json.loads(dumps(db['movies'].find_one({"_id": id})))
+        if movie is None:
+            return nodatas_message
+        return movie
+
+    def put(self, id):
+        from app import db
+        title = request.json['title']
+        description = request.json['description']
+        movie = db['movies'].update_one({"_id": id}, {"$set": {"title": title, "description": description}})
+        print(movie.raw_result)
+        if movie.raw_result['n'] == 0:
+            return nodatas_message
+        return update_success_message
+
+    def delete(self, id):
+        from app import db
+        movie = db['movies'].delete_one({"_id": id})
+        print(movie.raw_result)
+        if movie.raw_result['n'] == 0:
+            return nodatas_message
+        return exclude_success_message
+
+
+class Movie(Resource):
+    def post(self):
+        from app import db
+        title = request.json['title']
+        description = request.json['description']
+        db.movies.insert({"title": title, "description": description})
+        return post_success_message
