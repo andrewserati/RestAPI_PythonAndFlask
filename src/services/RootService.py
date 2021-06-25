@@ -1,6 +1,6 @@
 from flask_restful import Resource
 
-from resources.Messages import welcome_message
+from src.resources.Messages import welcome_message
 
 
 class Root(Resource):

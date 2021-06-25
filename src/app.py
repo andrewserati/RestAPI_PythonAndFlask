@@ -1,8 +1,8 @@
 from flask import Flask
 from flask_restful import Api
 
-from resources.DbConnection import DbConnection
-from resources.Routes import load_routes
+from src.resources.DbConnection import DbConnection
+from src.resources.Routes import load_routes
 
 
 app = Flask(__name__)
